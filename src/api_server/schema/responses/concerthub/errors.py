@@ -1,5 +1,6 @@
+from typing import Self
+
 from pydantic import BaseModel, Field, StrictStr
-from typing_extensions import Self
 
 
 class UnauthorizedResponseBody(BaseModel):
@@ -24,10 +25,10 @@ class PermissionDeniedResponseBody(BaseModel):
         return cls(detail=detail)
 
 
-class MessageNotFoundResponseBody(BaseModel):
+class NotFoundResponseBody(BaseModel):
     detail: StrictStr = Field(
         description="Error detail",
-        examples=["Message not found"],
+        examples=["Resource not found"],
     )
 
     @classmethod
@@ -35,10 +36,10 @@ class MessageNotFoundResponseBody(BaseModel):
         return cls(detail=detail)
 
 
-class EmptyMessageResponseBody(BaseModel):
+class ValidationErrorResponseBody(BaseModel):
     detail: StrictStr = Field(
         description="Error detail",
-        examples=["Message text can not be empty"],
+        examples=["Validation error"],
     )
 
     @classmethod

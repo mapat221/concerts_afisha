@@ -84,15 +84,16 @@ class AuditLogItem(BaseModel):
 
 # статистика по артисту
 class ArtistPopularityItem(BaseModel):
-    artist: str
-    music_genre: str | None = None
-    total_concerts: int
-    cities_visited: int
-    total_tickets_sold: int
-    total_gross: Decimal
+    artist: str  # артист
+    music_genre: str | None = None  # жанр музыки
+    total_concerts: int  # проведенные и запланированные концерты
+    cities_visited: int  # посещено городов
+    total_tickets_sold: int  # всего продано билетов
+    total_gross: Decimal  # сборы с исполнителя за все время
 
 
+# токен
 class SecretDataItem(BaseModel):
-    id: int
-    username: str | None = None
-    secret_token: str | None = None
+    id: int  # id токена
+    username: str | None = None  # логин пользователя
+    secret_token: str | None = None  # токен доступа

@@ -10,5 +10,5 @@ class SetRolesRequestBody(BaseModel):
     )
     roles: list[Roles] = Field(
         description="New roles for target user",
-        examples=[[Roles.user, Roles.moderator]],
+        examples=[[Roles.customer_group_role, Roles.staff_group_role]],
     )

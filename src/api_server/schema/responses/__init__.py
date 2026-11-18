@@ -1,1 +1,1 @@
-from . import base, login, messages, registration, roles
+from . import base, concerthub, login, registration, roles

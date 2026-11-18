@@ -1,16 +1,16 @@
 import uvicorn
+from concerts_afisha.domain.usecases.concerthub import ManageConcertHubUseCase
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api_server.app import dependency
 from api_server.routes import (
+    concerthub_router,
     login_router,
-    messages_router,
     registration_router,
     roles_router,
 )
 from concerts_afisha.domain.usecases.login import LoginUserUseCase
-from concerts_afisha.domain.usecases.messages import ManageMessagesUseCase
 from concerts_afisha.domain.usecases.registration import RegistrateUserUseCase
 from concerts_afisha.domain.usecases.roles import ManageRolesUseCase
 
@@ -19,14 +19,14 @@ def create_app(
     registrate_user: RegistrateUserUseCase,
     login_user: LoginUserUseCase,
     manage_roles: ManageRolesUseCase,
-    manage_messages: ManageMessagesUseCase,
+    manage_concerthub: ManageConcertHubUseCase,
 ) -> FastAPI:
     dependency.registrate_user = registrate_user
     dependency.login_user = login_user
     dependency.manage_roles = manage_roles
-    dependency.manage_messages = manage_messages
+    dependency.manage_concerthub = manage_concerthub
 
-    web_app = FastAPI(title="Lisichki")
+    web_app = FastAPI(title="ConcertHub")
     web_app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -37,7 +37,7 @@ def create_app(
     web_app.include_router(registration_router)
     web_app.include_router(login_router)
     web_app.include_router(roles_router)
-    web_app.include_router(messages_router)
+    web_app.include_router(concerthub_router)
     return web_app
 
 

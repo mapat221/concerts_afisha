@@ -91,7 +91,7 @@ class Venue(Base):
     total_capacity: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
-class Hall_Sector(Base):
+class HallSector(Base):
     __tablename__ = "hall_sector"
 
     sector_id: Mapped[int] = mapped_column(
@@ -120,15 +120,13 @@ class Customer(Base):
     __table_args__ = (Index("idx_customer_email", "email"),)
 
 
-class Ticket_Order(Base):
+class TicketOrder(Base):
     __tablename__ = "ticket_order"
 
     order_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     order_datetime: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     order_status: Mapped[str | None] = mapped_column(Text, nullable=True)
-    total_amount: Mapped[Decimal | None] = mapped_column(
-        Numeric(10, 2), nullable=True
-    )
+    total_amount: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
     customer_id: Mapped[int] = mapped_column(
         ForeignKey("customer.customer_id", onupdate="CASCADE", ondelete="CASCADE"),
         nullable=False,

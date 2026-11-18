@@ -2,17 +2,19 @@ import asyncio
 import logging
 import os
 
+from concerts_afisha.domain.usecases.concerthub import ManageConcertHubUseCase
+
 import environment as env
 from api_server.app.app import create_app, start_api_server
+from concerts_afisha.domain.entities import Roles
 from concerts_afisha.domain.usecases.login import LoginUserUseCase
-from concerts_afisha.domain.usecases.messages import ManageMessagesUseCase
 from concerts_afisha.domain.usecases.registration import (
     RegistrateUserUseCase,
     registration_errors,
 )
 from concerts_afisha.domain.usecases.roles import ManageRolesUseCase
-from concerts_afisha.implementations.message_repository import (
-    PostgresMessageRepository,
+from concerts_afisha.implementations.concerthub_repository import (
+    PostgresConcertHubRepository,
 )
 from concerts_afisha.implementations.password_hasher import Argon2PasswordHasher
 from concerts_afisha.implementations.token_manager import JwtTokenManager
@@ -20,6 +22,42 @@ from concerts_afisha.implementations.user_repository import PostgresUserReposito
 from utils.config import Configuration
 
 LOGGER = logging.getLogger(__name__)
+
+
+async def _seed_initial_users(
+    registrate_user: RegistrateUserUseCase,
+    user_repository: PostgresUserRepository,
+    admin_login: str,
+    admin_password: str,
+) -> None:
+    for login in [admin_login, "admin_user"]:
+        try:
+            await registrate_user.registrate_admin(
+                login=login,
+                password=admin_password,
+            )
+        except registration_errors.UserAlreadyExistsError:
+            pass
+
+    try:
+        await registrate_user.registrate(
+            login="ivan_customer",
+            password=admin_password,
+        )
+    except registration_errors.UserAlreadyExistsError:
+        pass
+
+    try:
+        await registrate_user.registrate(
+            login="petrov_staff",
+            password=admin_password,
+        )
+        await user_repository.update_roles(
+            login="petrov_staff",
+            roles=[Roles.staff_group_role, Roles.customer_group_role],
+        )
+    except registration_errors.UserAlreadyExistsError:
+        pass
 
 
 def main() -> int:
@@ -40,7 +78,7 @@ def main() -> int:
     user_repository = PostgresUserRepository(
         url=config.database.url,
     )
-    message_repository = PostgresMessageRepository(
+    concerthub_repository = PostgresConcertHubRepository(
         url=config.database.url,
     )
 
@@ -58,36 +96,30 @@ def main() -> int:
         user_repository=user_repository,
         token_manager=token_manager,
     )
-    manage_messages = ManageMessagesUseCase(
-        message_repository=message_repository,
+    manage_concerthub = ManageConcertHubUseCase(
+        concerthub_repository=concerthub_repository,
         user_repository=user_repository,
         token_manager=token_manager,
     )
 
     try:
         asyncio.run(
-            registrate_user.registrate_admin(
-                login=config.admin.login,
-                password=config.admin.password,
+            _seed_initial_users(
+                registrate_user=registrate_user,
+                user_repository=user_repository,
+                admin_login=config.admin.login,
+                admin_password=config.admin.password,
             )
         )
-    except registration_errors.UserAlreadyExistsError:
-        LOGGER.info("Admin user already exists, skip")
-    except registration_errors.InvalidLoginError:
-        LOGGER.critical("Admin login is invalid")
-        return 1
-    except registration_errors.WeakPasswordError:
-        LOGGER.critical("Admin password is weak")
-        return 1
     except Exception:
-        LOGGER.critical("Unable to create admin user.", exc_info=True)
+        LOGGER.critical("Unable to seed initial users.", exc_info=True)
         return 1
 
     web_app = create_app(
         registrate_user=registrate_user,
         login_user=login_user,
         manage_roles=manage_roles,
-        manage_messages=manage_messages,
+        manage_concerthub=manage_concerthub,
     )
 
     try:
