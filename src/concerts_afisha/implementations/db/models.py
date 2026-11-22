@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
     Date,
@@ -17,8 +17,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
-    def __init__(self, **kw: Any) -> None:
-        super().__init__(**kw)
+    if TYPE_CHECKING:
+
+        def __init__(self, **kw: Any) -> None: ...
 
 
 class UserRoleOrm(Base):

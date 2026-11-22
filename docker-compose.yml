@@ -31,7 +31,7 @@ services:
       ADMIN_LOGIN: "admin"
       ADMIN_PASSWORD: "Abcd123456!"
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       - db
 
@@ -42,7 +42,7 @@ services:
     container_name: concerts_afisha_frontend
     restart: always
     ports:
-      - "5173:5173"
+      - "5174:5173"
     depends_on:
       - backend
 

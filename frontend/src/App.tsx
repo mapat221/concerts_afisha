@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import "./App.css";
 
-const API_URL = "http://localhost:8000/api";
+const API_URL = `http://${window.location.hostname}:8001/api`;
 
 interface AvailableTicketOption {
   ticket_id: number;
