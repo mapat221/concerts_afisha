@@ -423,6 +423,89 @@ class PostgresConcertHubRepository(ConcertHubRepository):
             rows = (await session.execute(request)).all()
             return [self._to_venue_config_domain(row) for row in rows]
 
+    async def get_staff_form_options(self) -> StaffFormOptions:
+        async with self._session_factory() as session:
+            artist_orms: Any = (
+                await session.scalars(select(Artist).order_by(Artist.artist_id))
+            ).all()
+            venue_orms: Any = (
+                await session.scalars(select(Venue).order_by(Venue.venue_id))
+            ).all()
+            promoter_orms: Any = (
+                await session.scalars(select(Promoter).order_by(Promoter.promoter_id))
+            ).all()
+
+            concerts_request = (
+                select(
+                    Concert.concert_id,
+                    Concert.program_name,
+                    Artist.stage_name,
+                    Venue.venue_id,
+                    Venue.venue_name,
+                )
+                .join(Artist, Concert.artist_id == Artist.artist_id)
+                .join(Venue, Concert.venue_id == Venue.venue_id)
+                .order_by(Concert.concert_id)
+            )
+            concert_rows = (await session.execute(concerts_request)).all()
+
+            sectors_request = (
+                select(
+                    Venue.venue_id,
+                    Venue.venue_name,
+                    Venue.city,
+                    Venue.total_capacity,
+                    HallSector.sector_id,
+                    HallSector.sector_name,
+                    HallSector.sector_capacity,
+                    HallSector.sector_type,
+                )
+                .join(HallSector, Venue.venue_id == HallSector.venue_id)
+                .order_by(Venue.venue_id, HallSector.sector_id)
+            )
+            sector_rows = (await session.execute(sectors_request)).all()
+
+            barcodes_request = select(Ticket.barcode).order_by(Ticket.ticket_id)
+            barcode_vals: Any = (await session.scalars(barcodes_request)).all()
+
+            return StaffFormOptions(
+                artists=[
+                    ArtistOption(
+                        artist_id=int(a.artist_id),
+                        stage_name=str(a.stage_name or ""),
+                        music_genre=str(a.music_genre or ""),
+                    )
+                    for a in artist_orms
+                ],
+                venues=[
+                    VenueOption(
+                        venue_id=int(v.venue_id),
+                        venue_name=str(v.venue_name or ""),
+                        city=str(v.city or ""),
+                    )
+                    for v in venue_orms
+                ],
+                promoters=[
+                    PromoterOption(
+                        promoter_id=int(p.promoter_id),
+                        company_name=str(p.company_name or ""),
+                    )
+                    for p in promoter_orms
+                ],
+                concerts=[
+                    ConcertOption(
+                        concert_id=int(c.concert_id),
+                        program_name=str(c.program_name or ""),
+                        artist_name=str(c.stage_name or ""),
+                        venue_id=int(c.venue_id),
+                        venue_name=str(c.venue_name or ""),
+                    )
+                    for c in concert_rows
+                ],
+                sectors=[self._to_venue_config_domain(s) for s in sector_rows],
+                barcodes=[str(b) for b in barcode_vals if b],
+            )
+
     async def create_concert(
         self,
         program_name: str,
@@ -596,94 +679,11 @@ class PostgresConcertHubRepository(ConcertHubRepository):
             request = select(MainLog).order_by(MainLog.log_item_id.desc())
             if operation_type:
                 request = request.where(MainLog.operation_type == operation_type)
-            log_orms = (await session.scalars(request)).all()
+            log_orms: Any = (await session.scalars(request)).all()
             return [self._to_audit_log_domain(log) for log in log_orms]
 
     async def get_secret_data(self) -> list[SecretDataItem]:
         async with self._session_factory() as session:
             request = select(SecretData).order_by(SecretData.ID)
-            secret_orms = (await session.scalars(request)).all()
+            secret_orms: Any = (await session.scalars(request)).all()
             return [self._to_secret_data_domain(item) for item in secret_orms]
-
-    async def get_staff_form_options(self) -> StaffFormOptions:
-        async with self._session_factory() as session:
-            artist_orms: Any = (
-                await session.scalars(select(Artist).order_by(Artist.artist_id))
-            ).all()
-            venue_orms: Any = (
-                await session.scalars(select(Venue).order_by(Venue.venue_id))
-            ).all()
-            promoter_orms: Any = (
-                await session.scalars(select(Promoter).order_by(Promoter.promoter_id))
-            ).all()
-
-            concerts_request = (
-                select(
-                    Concert.concert_id,
-                    Concert.program_name,
-                    Artist.stage_name,
-                    Venue.venue_id,
-                    Venue.venue_name,
-                )
-                .join(Artist, Concert.artist_id == Artist.artist_id)
-                .join(Venue, Concert.venue_id == Venue.venue_id)
-                .order_by(Concert.concert_id)
-            )
-            concert_rows = (await session.execute(concerts_request)).all()
-
-            sectors_request = (
-                select(
-                    Venue.venue_id,
-                    Venue.venue_name,
-                    Venue.city,
-                    Venue.total_capacity,
-                    HallSector.sector_id,
-                    HallSector.sector_name,
-                    HallSector.sector_capacity,
-                    HallSector.sector_type,
-                )
-                .join(HallSector, Venue.venue_id == HallSector.venue_id)
-                .order_by(Venue.venue_id, HallSector.sector_id)
-            )
-            sector_rows = (await session.execute(sectors_request)).all()
-
-            barcodes_request = select(Ticket.barcode).order_by(Ticket.ticket_id)
-            barcode_vals: Any = (await session.scalars(barcodes_request)).all()
-
-            return StaffFormOptions(
-                artists=[
-                    ArtistOption(
-                        artist_id=int(a.artist_id),
-                        stage_name=str(a.stage_name or ""),
-                        music_genre=str(a.music_genre or ""),
-                    )
-                    for a in artist_orms
-                ],
-                venues=[
-                    VenueOption(
-                        venue_id=int(v.venue_id),
-                        venue_name=str(v.venue_name or ""),
-                        city=str(v.city or ""),
-                    )
-                    for v in venue_orms
-                ],
-                promoters=[
-                    PromoterOption(
-                        promoter_id=int(p.promoter_id),
-                        company_name=str(p.company_name or ""),
-                    )
-                    for p in promoter_orms
-                ],
-                concerts=[
-                    ConcertOption(
-                        concert_id=int(c.concert_id),
-                        program_name=str(c.program_name or ""),
-                        artist_name=str(c.stage_name or ""),
-                        venue_id=int(c.venue_id),
-                        venue_name=str(c.venue_name or ""),
-                    )
-                    for c in concert_rows
-                ],
-                sectors=[self._to_venue_config_domain(s) for s in sector_rows],
-                barcodes=[str(b) for b in barcode_vals if b],
-            )

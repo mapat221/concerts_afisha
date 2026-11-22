@@ -263,6 +263,54 @@ def upgrade() -> None:
     """)
     # ### end Alembic commands ###
 
+    op.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
+
+    op.execute("""
+    INSERT INTO secret_data (username, secret_token) VALUES
+    (
+        pgp_sym_encrypt('admin_concert', '29aaa1424afb8e8c740fb247a9d44723c8b5c82d8a12994ee2ed8b64e4410b63')::text,
+        pgp_sym_encrypt('token_admin', '29aaa1424afb8e8c740fb247a9d44723c8b5c82d8a12994ee2ed8b64e4410b63')::text
+    ),
+    (
+        pgp_sym_encrypt('manager_hub', '29aaa1424afb8e8c740fb247a9d44723c8b5c82d8a12994ee2ed8b64e4410b63')::text,
+        pgp_sym_encrypt('token_manager', '29aaa1424afb8e8c740fb247a9d44723c8b5c82d8a12994ee2ed8b64e4410b63')::text
+    );
+    """)
+
+    op.execute("""
+    CREATE OR REPLACE FUNCTION public.logging() RETURNS TRIGGER AS $logging$
+    BEGIN
+        IF (TG_OP = 'DELETE') THEN
+            INSERT INTO main_log (operation_type, operation_date, user_operator, changed_data)
+            VALUES ('D', now()::text, current_user, row_to_json(OLD)::text);
+        ELSIF (TG_OP = 'UPDATE') THEN
+            INSERT INTO main_log (operation_type, operation_date, user_operator, changed_data)
+            VALUES ('U', now()::text, current_user, row_to_json(NEW)::text);
+        ELSIF (TG_OP = 'INSERT') THEN
+            INSERT INTO main_log (operation_type, operation_date, user_operator, changed_data)
+            VALUES ('I', now()::text, current_user, row_to_json(NEW)::text);
+        END IF;
+        RETURN NULL;
+    END;
+    $logging$ LANGUAGE plpgsql;
+    """)
+
+    for tbl in [
+        "artist",
+        "concert",
+        "customer",
+        "hall_sector",
+        "promoter",
+        "ticket",
+        "ticket_order",
+        "venue",
+    ]:
+        op.execute(f"""
+        CREATE TRIGGER logging_exec_{tbl}
+        AFTER INSERT OR UPDATE OR DELETE ON public.{tbl}
+        FOR EACH ROW EXECUTE FUNCTION public.logging();
+        """)
+
 
 def downgrade() -> None:
     """Downgrade schema."""
