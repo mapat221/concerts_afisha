@@ -2,11 +2,10 @@ import asyncio
 import logging
 import os
 
-from concerts_afisha.domain.usecases.concerthub import ManageConcertHubUseCase
-
 import environment as env
 from api_server.app.app import create_app, start_api_server
 from concerts_afisha.domain.entities import Roles
+from concerts_afisha.domain.usecases.concerthub import ManageConcertHubUseCase
 from concerts_afisha.domain.usecases.login import LoginUserUseCase
 from concerts_afisha.domain.usecases.registration import (
     RegistrateUserUseCase,

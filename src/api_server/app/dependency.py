@@ -1,5 +1,4 @@
 from concerts_afisha.domain.usecases.concerthub import ManageConcertHubUseCase
-
 from concerts_afisha.domain.usecases.login import LoginUserUseCase
 from concerts_afisha.domain.usecases.registration import RegistrateUserUseCase
 from concerts_afisha.domain.usecases.roles import ManageRolesUseCase

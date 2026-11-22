@@ -11,6 +11,7 @@ from concerts_afisha.domain.entities import (
     AfishaItem,
     ArtistPopularityItem,
     AuditLogItem,
+    AvailableTicketOption,
     CustomerTicket,
     GateControlItem,
     SalesMonitoringItem,
@@ -56,7 +57,11 @@ class PostgresConcertHubRepository(ConcertHubRepository):
             expire_on_commit=False,
         )
 
-    def _to_afisha_domain(self, row: Any) -> AfishaItem:
+    def _to_afisha_domain(
+        self,
+        row: Any,
+        available_tickets: list[AvailableTicketOption],
+    ) -> AfishaItem:
         return AfishaItem(
             concert_id=int(row.concert_id),
             artist=str(row.stage_name or ""),
@@ -66,6 +71,7 @@ class PostgresConcertHubRepository(ConcertHubRepository):
             city=str(row.city or ""),
             venue_name=str(row.venue_name or ""),
             price_from=row.price_from,
+            available_tickets=available_tickets,
         )
 
     def _to_ticket_domain(self, row: Any) -> CustomerTicket:
@@ -185,7 +191,42 @@ class PostgresConcertHubRepository(ConcertHubRepository):
                 request = request.where(Artist.music_genre.ilike(f"%{genre}%"))
 
             rows = (await session.execute(request)).all()
-            return [self._to_afisha_domain(row) for row in rows]
+
+            tickets_request = (
+                select(
+                    Ticket.ticket_id,
+                    Ticket.concert_id,
+                    Ticket.barcode,
+                    Ticket.price,
+                    HallSector.sector_name,
+                )
+                .join(HallSector, Ticket.sector_id == HallSector.sector_id)
+                .where(Ticket.ticket_status == "Доступен")
+                .order_by(Ticket.price, Ticket.ticket_id)
+            )
+            ticket_rows = (await session.execute(tickets_request)).all()
+
+            tickets_by_concert: dict[int, list[AvailableTicketOption]] = {}
+            for t_row in ticket_rows:
+                c_id = int(t_row.concert_id)
+                if c_id not in tickets_by_concert:
+                    tickets_by_concert[c_id] = []
+                tickets_by_concert[c_id].append(
+                    AvailableTicketOption(
+                        ticket_id=int(t_row.ticket_id),
+                        barcode=str(t_row.barcode or ""),
+                        sector_name=str(t_row.sector_name or ""),
+                        price=t_row.price or Decimal(0),
+                    )
+                )
+
+            return [
+                self._to_afisha_domain(
+                    row,
+                    tickets_by_concert.get(int(row.concert_id), []),
+                )
+                for row in rows
+            ]
 
     async def get_user_tickets(self, customer_login: str) -> list[CustomerTicket]:
         async with self._session_factory() as session:
@@ -516,7 +557,7 @@ class PostgresConcertHubRepository(ConcertHubRepository):
         model, pk_col = self.TABLE_MODELS[table_name]
         async with self._session_factory() as session:
             request = select(model).order_by(pk_col)
-            orms = (await session.scalars(request)).all()
+            orms: Any = (await session.scalars(request)).all()
             result: list[dict[str, str | int | None]] = []
             for orm_obj in orms:
                 row_dict: dict[str, str | int | None] = {}

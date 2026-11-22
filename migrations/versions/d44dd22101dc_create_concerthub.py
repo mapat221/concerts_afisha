@@ -6,17 +6,16 @@ Create Date: 2026-11-13 01:28:01.446445
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "d44dd22101dc"
-down_revision: Union[str, Sequence[str], None] = "180d5a8311b4"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = "180d5a8311b4"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -188,7 +187,7 @@ def upgrade() -> None:
     INSERT INTO venue (venue_name, city, address, total_capacity) VALUES
     ('VK Stadium', 'Москва', 'Ленинградский пр-т, 80к17', 4200),
     ('МТС Live Холл', 'Москва', 'Шоссе Энтузиастов, 5', 3500),
-    ('Крокус Сити Холл', 'Красногорск', 'ул. Международная, 20', 6200),
+    ('Дома у Марата', 'Красногорск', 'ул. Международная, 20', 6200),
     ('Ледовый Дворец', 'Санкт-Петербург', 'пр-т Пятилеток, 1', 12500),
     ('ГлавClub', 'Санкт-Петербург', 'наб. Обводного канала, 118', 1500),
     ('Tele-Club', 'Екатеринбург', 'ул. Каменный цветок, 1', 1200),

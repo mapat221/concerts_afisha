@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 
 from sqlalchemy import (
     Date,
@@ -16,7 +17,8 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
-    pass
+    def __init__(self, **kw: Any) -> None:
+        super().__init__(**kw)
 
 
 class UserRoleOrm(Base):

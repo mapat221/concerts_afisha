@@ -16,12 +16,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: lisichki_backend
+    container_name: concerts_afisha_backend
     restart: always
     environment:
       APP_ENV: development
       PYTHONPATH: /app/src
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/lisichki_db
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/concerts_afisha_db
       HASH_SCHEME: argon2id
       ARGON2_TIME_COST: 3
       ARGON2_MEMORY_COST: 65536
@@ -39,7 +39,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: lisichki_frontend
+    container_name: concerts_afisha_frontend
     restart: always
     ports:
       - "5173:5173"

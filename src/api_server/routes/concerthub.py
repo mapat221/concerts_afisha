@@ -1,11 +1,11 @@
 from typing import Annotated
 
-from concerts_afisha.domain.usecases.concerthub import concerthub_errors
 from fastapi import APIRouter, Header, status
 from fastapi.responses import JSONResponse
 
 from api_server import schema
 from api_server.app import dependency
+from concerts_afisha.domain.usecases.concerthub import concerthub_errors
 
 concerthub_router = APIRouter(
     prefix="/api",

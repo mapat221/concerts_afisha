@@ -1,5 +1,6 @@
+from typing import Self
+
 from pydantic import BaseModel, Field, StrictStr
-from typing_extensions import Self
 
 from concerts_afisha.domain.entities import Roles
 
@@ -11,7 +12,7 @@ class UserRoleItem(BaseModel):
     )
     roles: list[Roles] = Field(
         description="User roles",
-        examples=[[Roles.user, Roles.moderator]],
+        examples=[[Roles.customer_group_role, Roles.staff_group_role]],
     )
 
 
@@ -34,7 +35,7 @@ class SetRolesResponseBody(BaseModel):
     )
     roles: list[Roles] = Field(
         description="Target user roles",
-        examples=[[Roles.user, Roles.moderator]],
+        examples=[[Roles.customer_group_role, Roles.staff_group_role]],
     )
 
     @classmethod

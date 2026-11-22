@@ -1,5 +1,6 @@
+from typing import Self
+
 from pydantic import BaseModel, Field, StrictStr
-from typing_extensions import Self
 
 
 class LoginResponseBody(BaseModel):

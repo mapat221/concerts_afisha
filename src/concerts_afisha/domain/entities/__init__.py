@@ -2,6 +2,7 @@ from .concerthub import (
     AfishaItem,
     ArtistPopularityItem,
     AuditLogItem,
+    AvailableTicketOption,
     CustomerTicket,
     GateControlItem,
     SalesMonitoringItem,

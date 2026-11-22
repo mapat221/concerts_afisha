@@ -6,6 +6,14 @@ from pydantic import BaseModel
 # юзерам
 
 
+# Доступный билет
+class AvailableTicketOption(BaseModel):
+    ticket_id: int  # id
+    barcode: str  # штрихкод
+    sector_name: str  # сектор
+    price: Decimal  # цена
+
+
 # один микроэлемент афиши для вью пользователя
 class AfishaItem(BaseModel):
     concert_id: int  # id концерта
@@ -16,6 +24,7 @@ class AfishaItem(BaseModel):
     city: str  # город
     venue_name: str  # название площадки
     price_from: Decimal | None = None  # цены от
+    available_tickets: list[AvailableTicketOption] = []  # доступные билеты
 
 
 # билет на концерт
