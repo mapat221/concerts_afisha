@@ -56,6 +56,21 @@ interface VenueConfigItem {
   sector_type: string;
 }
 
+interface StaffFormOptions {
+  artists: { artist_id: number; stage_name: string; music_genre: string }[];
+  venues: { venue_id: number; venue_name: string; city: string }[];
+  promoters: { promoter_id: number; company_name: string }[];
+  concerts: {
+    concert_id: number;
+    program_name: string;
+    artist_name: string;
+    venue_id: number;
+    venue_name: string;
+  }[];
+  sectors: VenueConfigItem[];
+  barcodes: string[];
+}
+
 interface GateControlItem {
   concert_id: number;
   start_datetime: string;
@@ -95,6 +110,10 @@ interface UserItem {
   roles: string[];
 }
 
+const CITIES = ["Москва", "Санкт-Петербург", "Екатеринбург", "Пермь", "Красногорск"];
+const GENRES = ["Pop", "Hyperpop", "Punk Rock", "Hip-Hop", "Indie Pop"];
+const AGE_RATINGS = ["0+", "6+", "12+", "16+", "18+"];
+
 export default function App() {
   const [token, setToken] = useState<string>(localStorage.getItem("token") || "");
   const [currentLogin, setCurrentLogin] = useState<string>(
@@ -131,6 +150,15 @@ export default function App() {
   const [salesSort, setSalesSort] = useState<string>("revenue_desc");
 
   const [venuesConfig, setVenuesConfig] = useState<VenueConfigItem[]>([]);
+  const [formOptions, setFormOptions] = useState<StaffFormOptions>({
+    artists: [],
+    venues: [],
+    promoters: [],
+    concerts: [],
+    sectors: [],
+    barcodes: [],
+  });
+
   const [programName, setProgramName] = useState<string>("");
   const [startDatetime, setStartDatetime] = useState<string>("2026-12-30T19:00");
   const [ageRestriction, setAgeRestriction] = useState<string>("16+");
@@ -175,8 +203,15 @@ export default function App() {
     if (!token) return;
     if (activeTab === "afisha") fetchAfisha();
     if (activeTab === "tickets") fetchUserTickets();
-    if (activeTab === "sales" && isStaff) fetchSalesMonitoring();
-    if (activeTab === "venues" && isStaff) fetchVenuesConfig();
+    if (activeTab === "sales" && isStaff) {
+      fetchStaffFormOptions();
+      fetchSalesMonitoring();
+    }
+    if (activeTab === "venues" && isStaff) {
+      fetchVenuesConfig();
+      fetchStaffFormOptions();
+    }
+    if (activeTab === "gate" && isStaff) fetchStaffFormOptions();
     if (activeTab === "popularity" && isAdmin) fetchArtistPopularity();
     if (activeTab === "tables" && isAdmin) fetchTablesList();
     if (activeTab === "audit" && isAdmin) fetchAuditLogs();
@@ -229,19 +264,19 @@ export default function App() {
     localStorage.clear();
   };
 
-  const fetchAfisha = async () => {
+  const fetchAfisha = async (cityOverride?: string, genreOverride?: string) => {
+    const cVal = cityOverride !== undefined ? cityOverride : cityFilter;
+    const gVal = genreOverride !== undefined ? genreOverride : genreFilter;
     const params = new URLSearchParams();
-    if (cityFilter.trim()) params.append("city", cityFilter.trim());
-    if (genreFilter.trim()) params.append("genre", genreFilter.trim());
+    if (cVal.trim()) params.append("city", cVal.trim());
+    if (gVal.trim()) params.append("genre", gVal.trim());
 
     try {
       const response = await fetch(`${API_URL}/afisha?${params.toString()}`, {
         headers: { token },
       });
       const data = await response.json();
-      if (response.ok) {
-        setAfisha(data.items);
-      }
+      if (response.ok) setAfisha(data.items);
     } catch {
       showAlert("Ошибка загрузки афиши", true);
     }
@@ -253,9 +288,7 @@ export default function App() {
         headers: { token },
       });
       const data = await response.json();
-      if (response.ok) {
-        setUserTickets(data.tickets);
-      }
+      if (response.ok) setUserTickets(data.tickets);
     } catch {
       showAlert("Ошибка загрузки билетов", true);
     }
@@ -318,10 +351,15 @@ export default function App() {
     }
   };
 
-  const fetchSalesMonitoring = async () => {
+  const fetchSalesMonitoring = async (
+    promOverride?: string,
+    venOverride?: string
+  ) => {
+    const pVal = promOverride !== undefined ? promOverride : promoterFilter;
+    const vVal = venOverride !== undefined ? venOverride : venueFilter;
     const params = new URLSearchParams();
-    if (promoterFilter.trim()) params.append("promoter_name", promoterFilter.trim());
-    if (venueFilter.trim()) params.append("venue_name", venueFilter.trim());
+    if (pVal.trim()) params.append("promoter_name", pVal.trim());
+    if (vVal.trim()) params.append("venue_name", vVal.trim());
 
     try {
       const response = await fetch(
@@ -329,11 +367,7 @@ export default function App() {
         { headers: { token } }
       );
       const data = await response.json();
-      if (response.ok) {
-        setSalesList(data.items);
-      } else {
-        showAlert(data.detail || "Доступ запрещен", true);
-      }
+      if (response.ok) setSalesList(data.items);
     } catch {
       showAlert("Ошибка загрузки мониторинга продаж", true);
     }
@@ -345,11 +379,58 @@ export default function App() {
         headers: { token },
       });
       const data = await response.json();
-      if (response.ok) {
-        setVenuesConfig(data.items);
-      }
+      if (response.ok) setVenuesConfig(data.items);
     } catch {
       showAlert("Ошибка загрузки площадок", true);
+    }
+  };
+
+  const fetchStaffFormOptions = async () => {
+    try {
+      const response = await fetch(`${API_URL}/staff/form-options`, {
+        headers: { token },
+      });
+      const data = await response.json();
+      if (response.ok && data.options) {
+        const opts: StaffFormOptions = data.options;
+        setFormOptions(opts);
+        if (opts.artists.length > 0) setArtistId(String(opts.artists[0].artist_id));
+        if (opts.venues.length > 0) setVenueId(String(opts.venues[0].venue_id));
+        if (opts.promoters.length > 0)
+          setPromoterId(String(opts.promoters[0].promoter_id));
+        if (opts.concerts.length > 0) {
+          const firstConcert = opts.concerts[0];
+          setRelConcertId(String(firstConcert.concert_id));
+          const matchingSectors = opts.sectors.filter(
+            (s) => s.venue_id === firstConcert.venue_id
+          );
+          if (matchingSectors.length > 0) {
+            setRelSectorId(String(matchingSectors[0].sector_id));
+          } else if (opts.sectors.length > 0) {
+            setRelSectorId(String(opts.sectors[0].sector_id));
+          }
+        }
+        if (opts.barcodes.length > 0 && !scanBarcodeInput) {
+          setScanBarcodeInput(opts.barcodes[0]);
+        }
+      }
+    } catch {
+      showAlert("Ошибка загрузки справочников", true);
+    }
+  };
+
+  const handleConcertSelectForRelease = (newConcertId: string) => {
+    setRelConcertId(newConcertId);
+    const chosenConcert = formOptions.concerts.find(
+      (c) => String(c.concert_id) === newConcertId
+    );
+    if (chosenConcert) {
+      const matchingSectors = formOptions.sectors.filter(
+        (s) => s.venue_id === chosenConcert.venue_id
+      );
+      if (matchingSectors.length > 0) {
+        setRelSectorId(String(matchingSectors[0].sector_id));
+      }
     }
   };
 
@@ -375,8 +456,9 @@ export default function App() {
         showAlert(data.detail || "Ошибка создания концерта", true);
         return;
       }
-      showAlert(`Концерт создан (ID: ${data.concert_id})`, false);
+      showAlert("Концерт добавлен в афишу", false);
       setProgramName("");
+      fetchStaffFormOptions();
     } catch {
       showAlert("Ошибка создания концерта", true);
     } finally {
@@ -404,7 +486,8 @@ export default function App() {
         showAlert(data.detail || "Превышена вместимость сектора", true);
         return;
       }
-      showAlert(`Выпущено билетов: ${data.barcodes.length}`, false);
+      showAlert(`Выпущено билетов: ${data.barcodes.length} шт.`, false);
+      fetchStaffFormOptions();
     } catch {
       showAlert("Ошибка выпуска билетов", true);
     } finally {
@@ -436,18 +519,17 @@ export default function App() {
     }
   };
 
-  const fetchArtistPopularity = async () => {
+  const fetchArtistPopularity = async (genreOverride?: string) => {
+    const gVal = genreOverride !== undefined ? genreOverride : popGenreFilter;
     const params = new URLSearchParams();
-    if (popGenreFilter.trim()) params.append("genre", popGenreFilter.trim());
+    if (gVal.trim()) params.append("genre", gVal.trim());
     try {
       const response = await fetch(
         `${API_URL}/admin/artist-popularity?${params.toString()}`,
         { headers: { token } }
       );
       const data = await response.json();
-      if (response.ok) {
-        setPopularityList(data.items);
-      }
+      if (response.ok) setPopularityList(data.items);
     } catch {
       showAlert("Ошибка загрузки статистики артистов", true);
     }
@@ -477,9 +559,7 @@ export default function App() {
         headers: { token },
       });
       const data = await response.json();
-      if (response.ok) {
-        setTableRows(data.rows);
-      }
+      if (response.ok) setTableRows(data.rows);
     } catch {
       showAlert("Ошибка загрузки данных таблицы", true);
     }
@@ -491,10 +571,7 @@ export default function App() {
     try {
       const response = await fetch(
         `${API_URL}/admin/tables/${selectedTable}/${recordId}`,
-        {
-          method: "DELETE",
-          headers: { token },
-        }
+        { method: "DELETE", headers: { token } }
       );
       const data = await response.json();
       if (!response.ok) {
@@ -510,18 +587,17 @@ export default function App() {
     }
   };
 
-  const fetchAuditLogs = async () => {
+  const fetchAuditLogs = async (opOverride?: string) => {
+    const opVal = opOverride !== undefined ? opOverride : auditOpFilter;
     const params = new URLSearchParams();
-    if (auditOpFilter) params.append("operation_type", auditOpFilter);
+    if (opVal) params.append("operation_type", opVal);
     try {
       const response = await fetch(
         `${API_URL}/admin/audit-logs?${params.toString()}`,
         { headers: { token } }
       );
       const data = await response.json();
-      if (response.ok) {
-        setAuditLogs(data.logs);
-      }
+      if (response.ok) setAuditLogs(data.logs);
     } catch {
       showAlert("Ошибка загрузки журнала аудита", true);
     }
@@ -533,9 +609,7 @@ export default function App() {
         headers: { token },
       });
       const data = await response.json();
-      if (response.ok) {
-        setSecretData(data.items);
-      }
+      if (response.ok) setSecretData(data.items);
     } catch {
       showAlert("Ошибка загрузки секретных данных", true);
     }
@@ -547,9 +621,7 @@ export default function App() {
         headers: { token },
       });
       const data = await response.json();
-      if (response.ok) {
-        setUsersList(data.users);
-      }
+      if (response.ok) setUsersList(data.users);
     } catch {
       showAlert("Ошибка загрузки пользователей", true);
     }
@@ -571,10 +643,7 @@ export default function App() {
       const response = await fetch(`${API_URL}/roles`, {
         method: "POST",
         headers: { "Content-Type": "application/json", token },
-        body: JSON.stringify({
-          target_login: targetLogin,
-          roles: updatedRoles,
-        }),
+        body: JSON.stringify({ target_login: targetLogin, roles: updatedRoles }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -643,6 +712,17 @@ export default function App() {
         .includes(tableSearch.toLowerCase())
     );
   });
+
+  const selectedConcertObj = formOptions.concerts.find(
+    (c) => String(c.concert_id) === relConcertId
+  );
+  const availableSectorsForRelease =
+    selectedConcertObj &&
+    formOptions.sectors.some((s) => s.venue_id === selectedConcertObj.venue_id)
+      ? formOptions.sectors.filter(
+          (s) => s.venue_id === selectedConcertObj.venue_id
+        )
+      : formOptions.sectors;
 
   if (!token) {
     return (
@@ -848,21 +928,35 @@ export default function App() {
           </div>
 
           <div className="toolbar">
-            <input
-              type="text"
-              placeholder="Фильтр по городу..."
+            <select
               value={cityFilter}
-              onChange={(e) => setCityFilter(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Фильтр по жанру..."
+              onChange={(e) => {
+                setCityFilter(e.target.value);
+                fetchAfisha(e.target.value, genreFilter);
+              }}
+            >
+              <option value="">Все города</option>
+              {CITIES.map((c) => (
+                <option key={c} value={c}>
+                  Город: {c}
+                </option>
+              ))}
+            </select>
+
+            <select
               value={genreFilter}
-              onChange={(e) => setGenreFilter(e.target.value)}
-            />
-            <button type="button" onClick={fetchAfisha}>
-              Применить фильтр
-            </button>
+              onChange={(e) => {
+                setGenreFilter(e.target.value);
+                fetchAfisha(cityFilter, e.target.value);
+              }}
+            >
+              <option value="">Все жанры</option>
+              {GENRES.map((g) => (
+                <option key={g} value={g}>
+                  Жанр: {g}
+                </option>
+              ))}
+            </select>
 
             <select
               value={afishaSort}
@@ -948,7 +1042,6 @@ export default function App() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>ID</th>
                   <th>Штрихкод</th>
                   <th>Исполнитель</th>
                   <th>Программа</th>
@@ -963,12 +1056,11 @@ export default function App() {
               <tbody>
                 {userTickets.length === 0 ? (
                   <tr>
-                    <td colSpan={10}>Нет купленных билетов</td>
+                    <td colSpan={9}>Нет купленных билетов</td>
                   </tr>
                 ) : (
                   userTickets.map((t) => (
                     <tr key={t.ticket_id}>
-                      <td>{t.ticket_id}</td>
                       <td>{t.barcode}</td>
                       <td>{t.artist}</td>
                       <td>{t.program_name}</td>
@@ -1005,21 +1097,35 @@ export default function App() {
           </div>
 
           <div className="toolbar">
-            <input
-              type="text"
-              placeholder="Фильтр по организатору..."
+            <select
               value={promoterFilter}
-              onChange={(e) => setPromoterFilter(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Фильтр по площадке..."
+              onChange={(e) => {
+                setPromoterFilter(e.target.value);
+                fetchSalesMonitoring(e.target.value, venueFilter);
+              }}
+            >
+              <option value="">Все организаторы</option>
+              {formOptions.promoters.map((p) => (
+                <option key={p.promoter_id} value={p.company_name}>
+                  {p.company_name}
+                </option>
+              ))}
+            </select>
+
+            <select
               value={venueFilter}
-              onChange={(e) => setVenueFilter(e.target.value)}
-            />
-            <button type="button" onClick={fetchSalesMonitoring}>
-              Фильтровать
-            </button>
+              onChange={(e) => {
+                setVenueFilter(e.target.value);
+                fetchSalesMonitoring(promoterFilter, e.target.value);
+              }}
+            >
+              <option value="">Все площадки</option>
+              {formOptions.venues.map((v) => (
+                <option key={v.venue_id} value={v.venue_name}>
+                  {v.venue_name} ({v.city})
+                </option>
+              ))}
+            </select>
 
             <select
               value={salesSort}
@@ -1074,53 +1180,76 @@ export default function App() {
               </div>
               <form onSubmit={handleCreateConcert}>
                 <div className="form-group">
-                  <label>Название программы</label>
+                  <label>Название концертной программы</label>
                   <input
                     type="text"
                     value={programName}
                     onChange={(e) => setProgramName(e.target.value)}
+                    placeholder="Введите название шоу или тура"
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label>Дата и время</label>
-                  <input
-                    type="datetime-local"
-                    value={startDatetime}
-                    onChange={(e) => setStartDatetime(e.target.value)}
-                    required
-                  />
+                  <label>Исполнитель</label>
+                  <select
+                    value={artistId}
+                    onChange={(e) => setArtistId(e.target.value)}
+                  >
+                    {formOptions.artists.map((a) => (
+                      <option key={a.artist_id} value={a.artist_id}>
+                        {a.stage_name} ({a.music_genre})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group">
-                  <label>Возрастное ограничение</label>
-                  <input
-                    type="text"
-                    value={ageRestriction}
-                    onChange={(e) => setAgeRestriction(e.target.value)}
-                    required
-                  />
+                  <label>Концертная площадка</label>
+                  <select
+                    value={venueId}
+                    onChange={(e) => setVenueId(e.target.value)}
+                  >
+                    {formOptions.venues.map((v) => (
+                      <option key={v.venue_id} value={v.venue_id}>
+                        {v.venue_name} ({v.city})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group">
-                  <label>ID Артиста / ID Площадки / ID Организатора</label>
-                  <div style={{ display: "flex", gap: "8px" }}>
+                  <label>Организатор</label>
+                  <select
+                    value={promoterId}
+                    onChange={(e) => setPromoterId(e.target.value)}
+                  >
+                    {formOptions.promoters.map((p) => (
+                      <option key={p.promoter_id} value={p.promoter_id}>
+                        {p.company_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <div className="form-group" style={{ flex: 2 }}>
+                    <label>Дата и время</label>
                     <input
-                      type="number"
-                      value={artistId}
-                      onChange={(e) => setArtistId(e.target.value)}
+                      type="datetime-local"
+                      value={startDatetime}
+                      onChange={(e) => setStartDatetime(e.target.value)}
                       required
                     />
-                    <input
-                      type="number"
-                      value={venueId}
-                      onChange={(e) => setVenueId(e.target.value)}
-                      required
-                    />
-                    <input
-                      type="number"
-                      value={promoterId}
-                      onChange={(e) => setPromoterId(e.target.value)}
-                      required
-                    />
+                  </div>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label>Возрастной ценз</label>
+                    <select
+                      value={ageRestriction}
+                      onChange={(e) => setAgeRestriction(e.target.value)}
+                    >
+                      {AGE_RATINGS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 <button type="submit" className="btn-submit" disabled={loading}>
@@ -1135,22 +1264,31 @@ export default function App() {
               </div>
               <form onSubmit={handleReleaseTickets}>
                 <div className="form-group">
-                  <label>ID Концерта</label>
-                  <input
-                    type="number"
+                  <label>Концерт</label>
+                  <select
                     value={relConcertId}
-                    onChange={(e) => setRelConcertId(e.target.value)}
-                    required
-                  />
+                    onChange={(e) => handleConcertSelectForRelease(e.target.value)}
+                  >
+                    {formOptions.concerts.map((c) => (
+                      <option key={c.concert_id} value={c.concert_id}>
+                        {c.artist_name} — «{c.program_name}» ({c.venue_name})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group">
-                  <label>ID Сектора зала</label>
-                  <input
-                    type="number"
+                  <label>Сектор зала</label>
+                  <select
                     value={relSectorId}
                     onChange={(e) => setRelSectorId(e.target.value)}
-                    required
-                  />
+                  >
+                    {availableSectorsForRelease.map((s) => (
+                      <option key={s.sector_id} value={s.sector_id}>
+                        {s.venue_name} — {s.sector_name} ({s.sector_type}, лимит:{" "}
+                        {s.sector_capacity} мест)
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label>Цена билета (руб.)</label>
@@ -1162,7 +1300,7 @@ export default function App() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Количество билетов</label>
+                  <label>Количество билетов для выпуска</label>
                   <input
                     type="number"
                     value={relCount}
@@ -1185,11 +1323,9 @@ export default function App() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>ID Площадки</th>
                     <th>Площадка</th>
                     <th>Город</th>
                     <th>Общая вместимость</th>
-                    <th>ID Сектора</th>
                     <th>Сектор</th>
                     <th>Вместимость сектора</th>
                     <th>Тип сектора</th>
@@ -1198,11 +1334,9 @@ export default function App() {
                 <tbody>
                   {venuesConfig.map((v) => (
                     <tr key={`${v.venue_id}-${v.sector_id}`}>
-                      <td>{v.venue_id}</td>
                       <td>{v.venue_name}</td>
                       <td>{v.city}</td>
                       <td>{v.total_capacity}</td>
-                      <td>{v.sector_id}</td>
                       <td>{v.sector_name}</td>
                       <td>{v.sector_capacity}</td>
                       <td>{v.sector_type}</td>
@@ -1222,9 +1356,19 @@ export default function App() {
           </div>
 
           <form onSubmit={handleScanTicket} className="toolbar">
+            <select
+              value={scanBarcodeInput}
+              onChange={(e) => setScanBarcodeInput(e.target.value)}
+            >
+              {formOptions.barcodes.map((b) => (
+                <option key={b} value={b}>
+                  Штрихкод: {b}
+                </option>
+              ))}
+            </select>
             <input
               type="text"
-              placeholder="Введите штрихкод (напр. TK-990101)"
+              placeholder="Или введите штрихкод вручную..."
               value={scanBarcodeInput}
               onChange={(e) => setScanBarcodeInput(e.target.value)}
               required
@@ -1239,7 +1383,6 @@ export default function App() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>ID Концерта</th>
                     <th>Дата концерта</th>
                     <th>Штрихкод</th>
                     <th>Статус билета</th>
@@ -1251,7 +1394,6 @@ export default function App() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td>{scannedTicket.concert_id}</td>
                     <td>
                       {new Date(scannedTicket.start_datetime).toLocaleString("ru-RU")}
                     </td>
@@ -1278,15 +1420,20 @@ export default function App() {
           </div>
 
           <div className="toolbar">
-            <input
-              type="text"
-              placeholder="Фильтр по жанру..."
+            <select
               value={popGenreFilter}
-              onChange={(e) => setPopGenreFilter(e.target.value)}
-            />
-            <button type="button" onClick={fetchArtistPopularity}>
-              Фильтровать
-            </button>
+              onChange={(e) => {
+                setPopGenreFilter(e.target.value);
+                fetchArtistPopularity(e.target.value);
+              }}
+            >
+              <option value="">Все жанры</option>
+              {GENRES.map((g) => (
+                <option key={g} value={g}>
+                  Жанр: {g}
+                </option>
+              ))}
+            </select>
 
             <select value={popSort} onChange={(e) => setPopSort(e.target.value)}>
               <option value="gross_desc">Сортировка: общие сборы (по убыванию)</option>
@@ -1406,16 +1553,16 @@ export default function App() {
           <div className="toolbar">
             <select
               value={auditOpFilter}
-              onChange={(e) => setAuditOpFilter(e.target.value)}
+              onChange={(e) => {
+                setAuditOpFilter(e.target.value);
+                fetchAuditLogs(e.target.value);
+              }}
             >
               <option value="">Все операции</option>
               <option value="I">INSERT (I)</option>
               <option value="U">UPDATE (U)</option>
               <option value="D">DELETE (D)</option>
             </select>
-            <button type="button" onClick={fetchAuditLogs}>
-              Обновить
-            </button>
           </div>
 
           <div className="data-table-wrapper">

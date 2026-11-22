@@ -10,6 +10,7 @@ from concerts_afisha.domain.entities import (
     GateControlItem,
     SalesMonitoringItem,
     SecretDataItem,
+    StaffFormOptions,
     VenueConfigItem,
 )
 
@@ -63,6 +64,14 @@ class GetVenuesConfigResponseBody(BaseModel):
     @classmethod
     def create(cls, items: list[VenueConfigItem]) -> Self:
         return cls(items=items)
+
+
+class GetStaffFormOptionsResponseBody(BaseModel):
+    options: StaffFormOptions
+
+    @classmethod
+    def create(cls, options: StaffFormOptions) -> Self:
+        return cls(options=options)
 
 
 class CreateConcertResponseBody(BaseModel):

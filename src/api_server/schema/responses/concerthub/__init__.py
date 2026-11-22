@@ -9,6 +9,7 @@ from .concerthub import (
     GetAuditLogsResponseBody,
     GetSalesMonitoringResponseBody,
     GetSecretDataResponseBody,
+    GetStaffFormOptionsResponseBody,
     GetTableDataResponseBody,
     GetUserTicketsResponseBody,
     GetVenuesConfigResponseBody,

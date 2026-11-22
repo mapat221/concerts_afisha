@@ -628,3 +628,40 @@ async def get_secret_data(
             ).model_dump(),
         )
     return schema.responses.concerthub.GetSecretDataResponseBody.create(items=items)
+
+
+@concerthub_router.get(
+    "/staff/form-options",
+    status_code=status.HTTP_200_OK,
+    response_model=schema.responses.concerthub.GetStaffFormOptionsResponseBody,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": schema.responses.concerthub.errors.UnauthorizedResponseBody
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": schema.responses.concerthub.errors.PermissionDeniedResponseBody
+        },
+    },
+)
+async def get_staff_form_options(
+    token: Annotated[str, Header()],
+) -> schema.responses.concerthub.GetStaffFormOptionsResponseBody | JSONResponse:
+    try:
+        options = await dependency.manage_concerthub.get_staff_form_options(token=token)
+    except concerthub_errors.UnauthorizedError:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content=schema.responses.concerthub.errors.UnauthorizedResponseBody.new(
+                detail="Unauthorized"
+            ).model_dump(),
+        )
+    except concerthub_errors.PermissionDeniedError:
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content=schema.responses.concerthub.errors.PermissionDeniedResponseBody.new(
+                detail="Access denied for caller"
+            ).model_dump(),
+        )
+    return schema.responses.concerthub.GetStaffFormOptionsResponseBody.create(
+        options=options
+    )

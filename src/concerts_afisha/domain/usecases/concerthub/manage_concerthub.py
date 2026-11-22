@@ -11,6 +11,7 @@ from concerts_afisha.domain.entities import (
     Roles,
     SalesMonitoringItem,
     SecretDataItem,
+    StaffFormOptions,
     User,
     VenueConfigItem,
 )
@@ -105,6 +106,16 @@ class ManageConcertHubUseCase:
             self.logger.error(f"Access denied for user {caller.login}")
             raise concerthub_errors.PermissionDeniedError
         return await self._concerthub_repository.get_venues_configuration()
+
+    async def get_staff_form_options(self, token: str) -> StaffFormOptions:
+        caller = await self._get_caller(token)
+        if (
+            Roles.staff_group_role not in caller.roles
+            and Roles.admin_group_role not in caller.roles
+        ):
+            self.logger.error(f"Access denied for user {caller.login}")
+            raise concerthub_errors.PermissionDeniedError
+        return await self._concerthub_repository.get_staff_form_options()
 
     async def create_concert(
         self,

@@ -106,3 +106,42 @@ class SecretDataItem(BaseModel):
     id: int  # id токена
     username: str | None = None  # логин пользователя
     secret_token: str | None = None  # токен доступа
+
+
+# для списка артистов
+class ArtistOption(BaseModel):
+    artist_id: int  # id артиста
+    stage_name: str  # сценическое имя
+    music_genre: str  # жанр музыки
+
+
+# для списка площадок
+class VenueOption(BaseModel):
+    venue_id: int  # id площадки
+    venue_name: str  # название площадки
+    city: str  # город
+
+
+# для списка промоутеров
+class PromoterOption(BaseModel):
+    promoter_id: int  # id промоутера
+    company_name: str  # название компании
+
+
+# для списка концертов персоналу
+class ConcertOption(BaseModel):
+    concert_id: int  # id концерта
+    program_name: str  # название программы
+    artist_name: str  # имя артиста
+    venue_id: int  # id площадки
+    venue_name: str  # название площадки
+
+
+# для опций персонала
+class StaffFormOptions(BaseModel):
+    artists: list[ArtistOption]  # артисты
+    venues: list[VenueOption]  # площадки
+    promoters: list[PromoterOption]  # промоутеры
+    concerts: list[ConcertOption]  # концерты
+    sectors: list[VenueConfigItem]  # сектора
+    barcodes: list[str]  # штрихкоды

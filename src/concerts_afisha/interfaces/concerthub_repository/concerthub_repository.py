@@ -10,6 +10,7 @@ from concerts_afisha.domain.entities import (
     GateControlItem,
     SalesMonitoringItem,
     SecretDataItem,
+    StaffFormOptions,
     VenueConfigItem,
 )
 
@@ -47,6 +48,10 @@ class ConcertHubRepository(ABC):
 
     @abstractmethod
     async def get_venues_configuration(self) -> list[VenueConfigItem]:
+        pass
+
+    @abstractmethod
+    async def get_staff_form_options(self) -> StaffFormOptions:
         pass
 
     @abstractmethod
