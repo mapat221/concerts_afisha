@@ -8,4 +8,6 @@ frontend/node_modules/
 frontend/dist/
 .env
 pgdata/
+.vscodebackups/
 .vscode
+backups/*.sql
