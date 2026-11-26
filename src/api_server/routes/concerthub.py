@@ -240,7 +240,7 @@ async def get_venues_config(
         status.HTTP_403_FORBIDDEN: {
             "model": schema.responses.concerthub.errors.PermissionDeniedResponseBody
         },
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "model": schema.responses.concerthub.errors.ValidationErrorResponseBody
         },
     },
@@ -275,7 +275,7 @@ async def create_concert(
         )
     except concerthub_errors.ValidationError:
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=schema.responses.concerthub.errors.ValidationErrorResponseBody.new(
                 detail="Invalid concert data"
             ).model_dump(),
@@ -296,7 +296,7 @@ async def create_concert(
         status.HTTP_403_FORBIDDEN: {
             "model": schema.responses.concerthub.errors.PermissionDeniedResponseBody
         },
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "model": schema.responses.concerthub.errors.ValidationErrorResponseBody
         },
     },
@@ -329,7 +329,7 @@ async def release_tickets(
         )
     except concerthub_errors.ValidationError:
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=schema.responses.concerthub.errors.ValidationErrorResponseBody.new(
                 detail="Sector capacity exceeded or invalid parameters"
             ).model_dump(),

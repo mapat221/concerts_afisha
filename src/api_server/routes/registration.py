@@ -19,10 +19,10 @@ registration_router = APIRouter(
         status.HTTP_409_CONFLICT: {
             "model": schema.responses.registration.errors.UserAlreadyExistsResponseBody
         },
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "model": schema.responses.registration.errors.InvalidLoginResponseBody
         },
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "model": schema.responses.registration.errors.WeakPasswordResponseBody
         },
     },
@@ -46,7 +46,7 @@ async def register(
     except registration_errors.InvalidLoginError:
         detail = "User login is invalid"
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=schema.responses.registration.errors.InvalidLoginResponseBody.new(
                 detail=detail
             ).model_dump(),
@@ -54,7 +54,7 @@ async def register(
     except registration_errors.WeakPasswordError:
         detail = "User password is so weak"
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=schema.responses.registration.errors.WeakPasswordResponseBody.new(
                 detail=detail
             ).model_dump(),

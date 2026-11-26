@@ -2,7 +2,6 @@ import asyncio
 import logging
 import os
 
-import environment as env
 from api_server.app.app import create_app, start_api_server
 from concerts_afisha.domain.entities import Roles
 from concerts_afisha.domain.usecases.concerthub import ManageConcertHubUseCase
@@ -18,7 +17,7 @@ from concerts_afisha.implementations.concerthub_repository import (
 from concerts_afisha.implementations.password_hasher import Argon2PasswordHasher
 from concerts_afisha.implementations.token_manager import JwtTokenManager
 from concerts_afisha.implementations.user_repository import PostgresUserRepository
-from utils.config import Configuration
+from config import settings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -60,25 +59,19 @@ async def _seed_initial_users(
 
 
 def main() -> int:
-    try:
-        config = Configuration.from_env()
-    except Exception:
-        LOGGER.critical("Unable to obtain configuration.", exc_info=True)
-        return 1
-
     password_hasher = Argon2PasswordHasher(
-        time_cost=config.argon2.time_cost,
-        memory_cost=config.argon2.memory_cost,
-        parallelism=config.argon2.parallelism,
+        time_cost=settings.argon2_time_cost,
+        memory_cost=settings.argon2_memory_cost,
+        parallelism=settings.argon2_parallelism,
     )
     token_manager = JwtTokenManager(
-        secret_key=config.jwt.secret_key,
+        secret_key=settings.secret_key.get_secret_value(),
     )
     user_repository = PostgresUserRepository(
-        url=config.database.url,
+        url=settings.database_url,
     )
     concerthub_repository = PostgresConcertHubRepository(
-        url=config.database.url,
+        url=settings.database_url,
     )
 
     registrate_user = RegistrateUserUseCase(
@@ -106,8 +99,8 @@ def main() -> int:
             _seed_initial_users(
                 registrate_user=registrate_user,
                 user_repository=user_repository,
-                admin_login=config.admin.login,
-                admin_password=config.admin.password,
+                admin_login=settings.admin_login,
+                admin_password=settings.admin_password.get_secret_value(),
             )
         )
     except Exception:
@@ -122,7 +115,7 @@ def main() -> int:
     )
 
     try:
-        start_api_server(web_app, host="0.0.0.0", port=env.SERVE_PORT)
+        start_api_server(web_app, host="0.0.0.0", port=settings.port)
     except Exception:
         LOGGER.critical("API server stopped with error.", exc_info=True)
         return 1
