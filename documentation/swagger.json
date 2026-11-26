@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Lisichki",
+    "title": "ConcertHub",
     "version": "0.1.0"
   },
   "paths": {
@@ -271,14 +271,46 @@
         }
       }
     },
-    "/api/messages": {
+    "/api/afisha": {
       "get": {
         "tags": [
-          "messages"
+          "concerthub"
         ],
-        "summary": "Get Messages",
-        "operationId": "get_messages_api_messages_get",
+        "summary": "Get Afisha",
+        "operationId": "get_afisha_api_afisha_get",
         "parameters": [
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "City"
+            }
+          },
+          {
+            "name": "genre",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Genre"
+            }
+          },
           {
             "name": "token",
             "in": "header",
@@ -295,7 +327,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetMessagesResponseBody"
+                  "$ref": "#/components/schemas/GetAfishaResponseBody"
                 }
               }
             }
@@ -321,13 +353,67 @@
             }
           }
         }
-      },
+      }
+    },
+    "/api/tickets/user": {
+      "get": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Get User Tickets",
+        "operationId": "get_user_tickets_api_tickets_user_get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUserTicketsResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tickets/buy": {
       "post": {
         "tags": [
-          "messages"
+          "concerthub"
         ],
-        "summary": "Send Message",
-        "operationId": "send_message_api_messages_post",
+        "summary": "Buy Ticket",
+        "operationId": "buy_ticket_api_tickets_buy_post",
         "parameters": [
           {
             "name": "token",
@@ -344,18 +430,18 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SendMessageRequestBody"
+                "$ref": "#/components/schemas/BuyTicketRequestBody"
               }
             }
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SendMessageResponseBody"
+                  "$ref": "#/components/schemas/BuyTicketResponseBody"
                 }
               }
             }
@@ -370,34 +456,44 @@
             },
             "description": "Unauthorized"
           },
-          "422": {
+          "404": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EmptyMessageResponseBody"
+                  "$ref": "#/components/schemas/NotFoundResponseBody"
                 }
               }
             },
-            "description": "Unprocessable Entity"
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/messages/{message_id}": {
-      "delete": {
+    "/api/tickets/{ticket_id}/refund": {
+      "post": {
         "tags": [
-          "messages"
+          "concerthub"
         ],
-        "summary": "Delete Message",
-        "operationId": "delete_message_api_messages__message_id__delete",
+        "summary": "Refund Ticket",
+        "operationId": "refund_ticket_api_tickets__ticket_id__refund_post",
         "parameters": [
           {
-            "name": "message_id",
+            "name": "ticket_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Message Id"
+              "title": "Ticket Id"
             }
           },
           {
@@ -416,7 +512,379 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DeleteMessageResponseBody"
+                  "$ref": "#/components/schemas/ActionMessageResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponseBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/staff/sales-monitoring": {
+      "get": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Get Sales Monitoring",
+        "operationId": "get_sales_monitoring_api_staff_sales_monitoring_get",
+        "parameters": [
+          {
+            "name": "promoter_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Promoter Name"
+            }
+          },
+          {
+            "name": "venue_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Venue Name"
+            }
+          },
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSalesMonitoringResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDeniedResponseBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/staff/venues-config": {
+      "get": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Get Venues Config",
+        "operationId": "get_venues_config_api_staff_venues_config_get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetVenuesConfigResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDeniedResponseBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/staff/concerts": {
+      "post": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Create Concert",
+        "operationId": "create_concert_api_staff_concerts_post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConcertRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateConcertResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDeniedResponseBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponseBody"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/staff/tickets/release": {
+      "post": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Release Tickets",
+        "operationId": "release_tickets_api_staff_tickets_release_post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseTicketsRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseTicketsResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDeniedResponseBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponseBody"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/staff/gate-control": {
+      "post": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Scan Gate Ticket",
+        "operationId": "scan_gate_ticket_api_staff_gate_control_post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanTicketRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanGateTicketResponseBody"
                 }
               }
             }
@@ -445,7 +913,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageNotFoundResponseBody"
+                  "$ref": "#/components/schemas/NotFoundResponseBody"
                 }
               }
             },
@@ -463,10 +931,778 @@
           }
         }
       }
+    },
+    "/api/admin/artist-popularity": {
+      "get": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Get Artist Popularity",
+        "operationId": "get_artist_popularity_api_admin_artist_popularity_get",
+        "parameters": [
+          {
+            "name": "genre",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Genre"
+            }
+          },
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetArtistPopularityResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDeniedResponseBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/tables": {
+      "get": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Get All Tables",
+        "operationId": "get_all_tables_api_admin_tables_get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAllTablesResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDeniedResponseBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/tables/{table_name}": {
+      "get": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Get Table Data",
+        "operationId": "get_table_data_api_admin_tables__table_name__get",
+        "parameters": [
+          {
+            "name": "table_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Table Name"
+            }
+          },
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTableDataResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDeniedResponseBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/tables/{table_name}/{record_id}": {
+      "delete": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Delete Table Record",
+        "operationId": "delete_table_record_api_admin_tables__table_name___record_id__delete",
+        "parameters": [
+          {
+            "name": "table_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Table Name"
+            }
+          },
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Record Id"
+            }
+          },
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionMessageResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDeniedResponseBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponseBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/audit-logs": {
+      "get": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Get Audit Logs",
+        "operationId": "get_audit_logs_api_admin_audit_logs_get",
+        "parameters": [
+          {
+            "name": "operation_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Operation Type"
+            }
+          },
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAuditLogsResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDeniedResponseBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/secret-data": {
+      "get": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Get Secret Data",
+        "operationId": "get_secret_data_api_admin_secret_data_get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSecretDataResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDeniedResponseBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/staff/form-options": {
+      "get": {
+        "tags": [
+          "concerthub"
+        ],
+        "summary": "Get Staff Form Options",
+        "operationId": "get_staff_form_options_api_staff_form_options_get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetStaffFormOptionsResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponseBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDeniedResponseBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ActionMessageResponseBody": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Action status",
+            "examples": [
+              "Operation completed"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ActionMessageResponseBody"
+      },
+      "AfishaItem": {
+        "properties": {
+          "concert_id": {
+            "type": "integer",
+            "title": "Concert Id"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "program_name": {
+            "type": "string",
+            "title": "Program Name"
+          },
+          "start_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Datetime"
+          },
+          "age_restriction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Restriction"
+          },
+          "city": {
+            "type": "string",
+            "title": "City"
+          },
+          "venue_name": {
+            "type": "string",
+            "title": "Venue Name"
+          },
+          "price_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price From"
+          },
+          "available_tickets": {
+            "items": {
+              "$ref": "#/components/schemas/AvailableTicketOption"
+            },
+            "type": "array",
+            "title": "Available Tickets",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "concert_id",
+          "artist",
+          "program_name",
+          "start_datetime",
+          "city",
+          "venue_name"
+        ],
+        "title": "AfishaItem"
+      },
+      "ArtistOption": {
+        "properties": {
+          "artist_id": {
+            "type": "integer",
+            "title": "Artist Id"
+          },
+          "stage_name": {
+            "type": "string",
+            "title": "Stage Name"
+          },
+          "music_genre": {
+            "type": "string",
+            "title": "Music Genre"
+          }
+        },
+        "type": "object",
+        "required": [
+          "artist_id",
+          "stage_name",
+          "music_genre"
+        ],
+        "title": "ArtistOption"
+      },
+      "ArtistPopularityItem": {
+        "properties": {
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "music_genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Music Genre"
+          },
+          "total_concerts": {
+            "type": "integer",
+            "title": "Total Concerts"
+          },
+          "cities_visited": {
+            "type": "integer",
+            "title": "Cities Visited"
+          },
+          "total_tickets_sold": {
+            "type": "integer",
+            "title": "Total Tickets Sold"
+          },
+          "total_gross": {
+            "type": "string",
+            "title": "Total Gross"
+          }
+        },
+        "type": "object",
+        "required": [
+          "artist",
+          "total_concerts",
+          "cities_visited",
+          "total_tickets_sold",
+          "total_gross"
+        ],
+        "title": "ArtistPopularityItem"
+      },
+      "AuditLogItem": {
+        "properties": {
+          "log_item_id": {
+            "type": "integer",
+            "title": "Log Item Id"
+          },
+          "operation_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Type"
+          },
+          "operation_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Date"
+          },
+          "user_operator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Operator"
+          },
+          "changed_data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "log_item_id"
+        ],
+        "title": "AuditLogItem"
+      },
+      "AvailableTicketOption": {
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "title": "Ticket Id"
+          },
+          "barcode": {
+            "type": "string",
+            "title": "Barcode"
+          },
+          "sector_name": {
+            "type": "string",
+            "title": "Sector Name"
+          },
+          "price": {
+            "type": "string",
+            "title": "Price"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticket_id",
+          "barcode",
+          "sector_name",
+          "price"
+        ],
+        "title": "AvailableTicketOption"
+      },
+      "BuyTicketRequestBody": {
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "title": "Ticket Id",
+            "description": "Ticket ID to buy",
+            "examples": [4]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticket_id"
+        ],
+        "title": "BuyTicketRequestBody"
+      },
+      "BuyTicketResponseBody": {
+        "properties": {
+          "ticket": {
+            "$ref": "#/components/schemas/CustomerTicket"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticket"
+        ],
+        "title": "BuyTicketResponseBody"
+      },
       "CannotModifyAdminResponseBody": {
         "properties": {
           "detail": {
@@ -484,55 +1720,373 @@
         ],
         "title": "CannotModifyAdminResponseBody"
       },
-      "DeleteMessageResponseBody": {
+      "ConcertOption": {
         "properties": {
-          "message": {
+          "concert_id": {
+            "type": "integer",
+            "title": "Concert Id"
+          },
+          "program_name": {
             "type": "string",
-            "title": "Message",
-            "description": "Delete status",
-            "examples": [
-              "Message deleted"
-            ]
+            "title": "Program Name"
+          },
+          "artist_name": {
+            "type": "string",
+            "title": "Artist Name"
+          },
+          "venue_id": {
+            "type": "integer",
+            "title": "Venue Id"
+          },
+          "venue_name": {
+            "type": "string",
+            "title": "Venue Name"
           }
         },
         "type": "object",
         "required": [
-          "message"
+          "concert_id",
+          "program_name",
+          "artist_name",
+          "venue_id",
+          "venue_name"
         ],
-        "title": "DeleteMessageResponseBody"
+        "title": "ConcertOption"
       },
-      "EmptyMessageResponseBody": {
+      "CreateConcertRequestBody": {
         "properties": {
-          "detail": {
+          "program_name": {
             "type": "string",
-            "title": "Detail",
-            "description": "Error detail",
+            "title": "Program Name",
+            "description": "Concert program name",
             "examples": [
-              "Message text can not be empty"
+              "Большой концерт Дорочки"
             ]
+          },
+          "start_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Datetime",
+            "description": "Concert start date and time"
+          },
+          "age_restriction": {
+            "type": "string",
+            "title": "Age Restriction",
+            "description": "Age restriction",
+            "examples": [
+              "16+"
+            ]
+          },
+          "artist_id": {
+            "type": "integer",
+            "title": "Artist Id",
+            "description": "Artist ID",
+            "examples": [1]
+          },
+          "venue_id": {
+            "type": "integer",
+            "title": "Venue Id",
+            "description": "Venue ID",
+            "examples": [1]
+          },
+          "promoter_id": {
+            "type": "integer",
+            "title": "Promoter Id",
+            "description": "Promoter ID",
+            "examples": [1]
           }
         },
         "type": "object",
         "required": [
-          "detail"
+          "program_name",
+          "start_datetime",
+          "age_restriction",
+          "artist_id",
+          "venue_id",
+          "promoter_id"
         ],
-        "title": "EmptyMessageResponseBody"
+        "title": "CreateConcertRequestBody"
       },
-      "GetMessagesResponseBody": {
+      "CreateConcertResponseBody": {
         "properties": {
-          "messages": {
+          "concert_id": {
+            "type": "integer",
+            "title": "Concert Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "concert_id"
+        ],
+        "title": "CreateConcertResponseBody"
+      },
+      "CustomerTicket": {
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "title": "Ticket Id"
+          },
+          "barcode": {
+            "type": "string",
+            "title": "Barcode"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "program_name": {
+            "type": "string",
+            "title": "Program Name"
+          },
+          "start_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Datetime"
+          },
+          "venue_name": {
+            "type": "string",
+            "title": "Venue Name"
+          },
+          "sector_name": {
+            "type": "string",
+            "title": "Sector Name"
+          },
+          "price": {
+            "type": "string",
+            "title": "Price"
+          },
+          "ticket_status": {
+            "type": "string",
+            "title": "Ticket Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticket_id",
+          "barcode",
+          "artist",
+          "program_name",
+          "start_datetime",
+          "venue_name",
+          "sector_name",
+          "price",
+          "ticket_status"
+        ],
+        "title": "CustomerTicket"
+      },
+      "GateControlItem": {
+        "properties": {
+          "concert_id": {
+            "type": "integer",
+            "title": "Concert Id"
+          },
+          "start_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Datetime"
+          },
+          "barcode": {
+            "type": "string",
+            "title": "Barcode"
+          },
+          "ticket_status": {
+            "type": "string",
+            "title": "Ticket Status"
+          },
+          "sector_name": {
+            "type": "string",
+            "title": "Sector Name"
+          },
+          "sector_type": {
+            "type": "string",
+            "title": "Sector Type"
+          },
+          "customer_full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Full Name"
+          },
+          "phone_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone Number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "concert_id",
+          "start_datetime",
+          "barcode",
+          "ticket_status",
+          "sector_name",
+          "sector_type"
+        ],
+        "title": "GateControlItem"
+      },
+      "GetAfishaResponseBody": {
+        "properties": {
+          "items": {
             "items": {
-              "$ref": "#/components/schemas/MessageItem"
+              "$ref": "#/components/schemas/AfishaItem"
             },
             "type": "array",
-            "title": "Messages"
+            "title": "Items"
           }
         },
         "type": "object",
         "required": [
-          "messages"
+          "items"
         ],
-        "title": "GetMessagesResponseBody"
+        "title": "GetAfishaResponseBody"
+      },
+      "GetAllTablesResponseBody": {
+        "properties": {
+          "tables": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tables"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tables"
+        ],
+        "title": "GetAllTablesResponseBody"
+      },
+      "GetArtistPopularityResponseBody": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ArtistPopularityItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "GetArtistPopularityResponseBody"
+      },
+      "GetAuditLogsResponseBody": {
+        "properties": {
+          "logs": {
+            "items": {
+              "$ref": "#/components/schemas/AuditLogItem"
+            },
+            "type": "array",
+            "title": "Logs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "logs"
+        ],
+        "title": "GetAuditLogsResponseBody"
+      },
+      "GetSalesMonitoringResponseBody": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SalesMonitoringItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "GetSalesMonitoringResponseBody"
+      },
+      "GetSecretDataResponseBody": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SecretDataItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "GetSecretDataResponseBody"
+      },
+      "GetStaffFormOptionsResponseBody": {
+        "properties": {
+          "options": {
+            "$ref": "#/components/schemas/StaffFormOptions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "options"
+        ],
+        "title": "GetStaffFormOptionsResponseBody"
+      },
+      "GetTableDataResponseBody": {
+        "properties": {
+          "rows": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rows"
+        ],
+        "title": "GetTableDataResponseBody"
+      },
+      "GetUserTicketsResponseBody": {
+        "properties": {
+          "tickets": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerTicket"
+            },
+            "type": "array",
+            "title": "Tickets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tickets"
+        ],
+        "title": "GetUserTicketsResponseBody"
       },
       "GetUsersResponseBody": {
         "properties": {
@@ -549,6 +2103,22 @@
           "users"
         ],
         "title": "GetUsersResponseBody"
+      },
+      "GetVenuesConfigResponseBody": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VenueConfigItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "GetVenuesConfigResponseBody"
       },
       "HTTPValidationError": {
         "properties": {
@@ -655,55 +2225,14 @@
         ],
         "title": "LoginResponseBody"
       },
-      "MessageItem": {
-        "properties": {
-          "id_": {
-            "type": "string",
-            "title": "Id",
-            "description": "Message id",
-            "examples": [
-              "1"
-            ]
-          },
-          "author_login": {
-            "type": "string",
-            "title": "Author Login",
-            "description": "Author login",
-            "examples": [
-              "Alfredo"
-            ]
-          },
-          "text": {
-            "type": "string",
-            "title": "Text",
-            "description": "Message text",
-            "examples": [
-              "Hello world!"
-            ]
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id_",
-          "author_login",
-          "text",
-          "created_at"
-        ],
-        "title": "MessageItem"
-      },
-      "MessageNotFoundResponseBody": {
+      "NotFoundResponseBody": {
         "properties": {
           "detail": {
             "type": "string",
             "title": "Detail",
             "description": "Error detail",
             "examples": [
-              "Message not found"
+              "Resource not found"
             ]
           }
         },
@@ -711,7 +2240,7 @@
         "required": [
           "detail"
         ],
-        "title": "MessageNotFoundResponseBody"
+        "title": "NotFoundResponseBody"
       },
       "PermissionDeniedResponseBody": {
         "properties": {
@@ -729,6 +2258,24 @@
           "detail"
         ],
         "title": "PermissionDeniedResponseBody"
+      },
+      "PromoterOption": {
+        "properties": {
+          "promoter_id": {
+            "type": "integer",
+            "title": "Promoter Id"
+          },
+          "company_name": {
+            "type": "string",
+            "title": "Company Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "promoter_id",
+          "company_name"
+        ],
+        "title": "PromoterOption"
       },
       "RegistrationRequestBody": {
         "properties": {
@@ -810,43 +2357,187 @@
         ],
         "title": "RegistrationResponseBody"
       },
+      "ReleaseTicketsRequestBody": {
+        "properties": {
+          "concert_id": {
+            "type": "integer",
+            "title": "Concert Id",
+            "description": "Concert ID",
+            "examples": [1]
+          },
+          "sector_id": {
+            "type": "integer",
+            "title": "Sector Id",
+            "description": "Hall sector ID",
+            "examples": [1]
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Price",
+            "description": "Ticket price",
+            "examples": [
+              "3500"
+            ]
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of tickets to release",
+            "examples": [5]
+          }
+        },
+        "type": "object",
+        "required": [
+          "concert_id",
+          "sector_id",
+          "price",
+          "count"
+        ],
+        "title": "ReleaseTicketsRequestBody"
+      },
+      "ReleaseTicketsResponseBody": {
+        "properties": {
+          "barcodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Barcodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "barcodes"
+        ],
+        "title": "ReleaseTicketsResponseBody"
+      },
       "Roles": {
         "type": "string",
         "enum": [
-          "user",
-          "moderator",
-          "admin"
+          "customer_group_role",
+          "staff_group_role",
+          "admin_group_role"
         ],
         "title": "Roles"
       },
-      "SendMessageRequestBody": {
+      "SalesMonitoringItem": {
         "properties": {
-          "text": {
+          "promoter": {
             "type": "string",
-            "title": "Text",
-            "description": "Message text",
+            "title": "Promoter"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "program_name": {
+            "type": "string",
+            "title": "Program Name"
+          },
+          "venue_name": {
+            "type": "string",
+            "title": "Venue Name"
+          },
+          "total_capacity": {
+            "type": "integer",
+            "title": "Total Capacity"
+          },
+          "tickets_sold": {
+            "type": "integer",
+            "title": "Tickets Sold"
+          },
+          "occupancy_percent": {
+            "type": "number",
+            "title": "Occupancy Percent"
+          },
+          "total_revenue": {
+            "type": "string",
+            "title": "Total Revenue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "promoter",
+          "artist",
+          "program_name",
+          "venue_name",
+          "total_capacity",
+          "tickets_sold",
+          "occupancy_percent",
+          "total_revenue"
+        ],
+        "title": "SalesMonitoringItem"
+      },
+      "ScanGateTicketResponseBody": {
+        "properties": {
+          "item": {
+            "$ref": "#/components/schemas/GateControlItem"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item"
+        ],
+        "title": "ScanGateTicketResponseBody"
+      },
+      "ScanTicketRequestBody": {
+        "properties": {
+          "barcode": {
+            "type": "string",
+            "title": "Barcode",
+            "description": "Ticket barcode",
             "examples": [
-              "Hello world!"
+              "TK-990101"
             ]
           }
         },
         "type": "object",
         "required": [
-          "text"
+          "barcode"
         ],
-        "title": "SendMessageRequestBody"
+        "title": "ScanTicketRequestBody"
       },
-      "SendMessageResponseBody": {
+      "SecretDataItem": {
         "properties": {
-          "message": {
-            "$ref": "#/components/schemas/MessageItem"
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "secret_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Secret Token"
           }
         },
         "type": "object",
         "required": [
-          "message"
+          "id"
         ],
-        "title": "SendMessageResponseBody"
+        "title": "SecretDataItem"
       },
       "SetRolesRequestBody": {
         "properties": {
@@ -867,8 +2558,8 @@
             "description": "New roles for target user",
             "examples": [
               [
-                "user",
-                "moderator"
+                "customer_group_role",
+                "staff_group_role"
               ]
             ]
           }
@@ -907,8 +2598,8 @@
             "description": "Target user roles",
             "examples": [
               [
-                "user",
-                "moderator"
+                "customer_group_role",
+                "staff_group_role"
               ]
             ]
           }
@@ -920,6 +2611,62 @@
           "roles"
         ],
         "title": "SetRolesResponseBody"
+      },
+      "StaffFormOptions": {
+        "properties": {
+          "artists": {
+            "items": {
+              "$ref": "#/components/schemas/ArtistOption"
+            },
+            "type": "array",
+            "title": "Artists"
+          },
+          "venues": {
+            "items": {
+              "$ref": "#/components/schemas/VenueOption"
+            },
+            "type": "array",
+            "title": "Venues"
+          },
+          "promoters": {
+            "items": {
+              "$ref": "#/components/schemas/PromoterOption"
+            },
+            "type": "array",
+            "title": "Promoters"
+          },
+          "concerts": {
+            "items": {
+              "$ref": "#/components/schemas/ConcertOption"
+            },
+            "type": "array",
+            "title": "Concerts"
+          },
+          "sectors": {
+            "items": {
+              "$ref": "#/components/schemas/VenueConfigItem"
+            },
+            "type": "array",
+            "title": "Sectors"
+          },
+          "barcodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Barcodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "artists",
+          "venues",
+          "promoters",
+          "concerts",
+          "sectors",
+          "barcodes"
+        ],
+        "title": "StaffFormOptions"
       },
       "UnauthorizedResponseBody": {
         "properties": {
@@ -974,8 +2721,8 @@
             "description": "User roles",
             "examples": [
               [
-                "user",
-                "moderator"
+                "customer_group_role",
+                "staff_group_role"
               ]
             ]
           }
@@ -1026,6 +2773,94 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "ValidationErrorResponseBody": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "description": "Error detail",
+            "examples": [
+              "Validation error"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ValidationErrorResponseBody"
+      },
+      "VenueConfigItem": {
+        "properties": {
+          "venue_id": {
+            "type": "integer",
+            "title": "Venue Id"
+          },
+          "venue_name": {
+            "type": "string",
+            "title": "Venue Name"
+          },
+          "city": {
+            "type": "string",
+            "title": "City"
+          },
+          "total_capacity": {
+            "type": "integer",
+            "title": "Total Capacity"
+          },
+          "sector_id": {
+            "type": "integer",
+            "title": "Sector Id"
+          },
+          "sector_name": {
+            "type": "string",
+            "title": "Sector Name"
+          },
+          "sector_capacity": {
+            "type": "integer",
+            "title": "Sector Capacity"
+          },
+          "sector_type": {
+            "type": "string",
+            "title": "Sector Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "venue_id",
+          "venue_name",
+          "city",
+          "total_capacity",
+          "sector_id",
+          "sector_name",
+          "sector_capacity",
+          "sector_type"
+        ],
+        "title": "VenueConfigItem"
+      },
+      "VenueOption": {
+        "properties": {
+          "venue_id": {
+            "type": "integer",
+            "title": "Venue Id"
+          },
+          "venue_name": {
+            "type": "string",
+            "title": "Venue Name"
+          },
+          "city": {
+            "type": "string",
+            "title": "City"
+          }
+        },
+        "type": "object",
+        "required": [
+          "venue_id",
+          "venue_name",
+          "city"
+        ],
+        "title": "VenueOption"
       },
       "WeakPasswordResponseBody": {
         "properties": {
